@@ -1,0 +1,7 @@
+id,name,department,role,salary,is_active
+101,John Doe,Engineering,Backend Developer,5000,true
+102,Jane Smith,Marketing,SEO Specialist,3000,true
+103,Alice Johnson,Engineering,Frontend Developer,4500,false
+104,Bob Williams,HR,Recruiter,3500,true
+105,Charlie Brown,Engineering,DevOps,5500,true
+106,Diana Prince,Management,Director,8000,true
