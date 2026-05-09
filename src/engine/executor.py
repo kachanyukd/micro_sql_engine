@@ -4,7 +4,6 @@ from src.model.expression_tree import QueryAST
 
 
 class Executor:
-    """Executes a QueryAST against a Table and returns result rows."""
 
     def execute(self, table: Table, query: QueryAST) -> list:
         rows = self._apply_where(table.rows, query.conditions)

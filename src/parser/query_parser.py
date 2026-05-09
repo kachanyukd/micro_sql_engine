@@ -4,7 +4,6 @@ from src.model.expression_tree import Condition, QueryAST
 
 
 class QueryParser:
-    """Parses a simplified SQL query file into a QueryAST."""
 
     _OPERATORS = [">=", "<=", "!=", "=", ">", "<"]
 
