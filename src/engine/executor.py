@@ -1,15 +1,38 @@
-from src.model.expression_tree import Condition
+from src.exceptions import TypeConflictException, ValidationException
+from src.model.expression_tree import Condition, QueryAST
 from src.model.table import Row, Table
-from src.model.expression_tree import QueryAST
 
 
 class Executor:
+    """Executes a QueryAST against a Table and returns result rows."""
 
     def execute(self, table: Table, query: QueryAST) -> list:
+        self._validate_columns(table, query)
         rows = self._apply_where(table.rows, query.conditions)
-        rows = self._apply_order_by(rows, query.order_by, query.order_desc)
+        rows = self._apply_order_by(
+            rows, query.order_by, query.order_desc
+        )
         rows = self._apply_select(rows, query.columns, table.headers)
         return rows
+
+    def _validate_columns(
+        self, table: Table, query: QueryAST
+    ) -> None:
+        if query.columns != ["*"]:
+            for col in query.columns:
+                if col not in table.headers:
+                    raise ValidationException(
+                        f"Column '{col}' not found in table. "
+                        f"Available: {table.headers}"
+                    )
+
+        for condition in query.conditions:
+            if condition.column not in table.headers:
+                raise ValidationException(
+                    f"Column '{condition.column}' used in WHERE "
+                    f"not found in table. "
+                    f"Available: {table.headers}"
+                )
 
     def _apply_where(self, rows: list, conditions: list) -> list:
         result = []
@@ -26,7 +49,19 @@ class Executor:
         cell = raw_value.strip().lower()
         target = condition.value.strip().lower()
 
-        if self._is_numeric(cell) and self._is_numeric(target):
+        numeric_operators = [">", "<", ">=", "<="]
+        cell_is_numeric = self._is_numeric(cell)
+        target_is_numeric = self._is_numeric(target)
+
+        if condition.operator in numeric_operators:
+            if not cell_is_numeric or not target_is_numeric:
+                raise TypeConflictException(
+                    f"Cannot use '{condition.operator}' to compare "
+                    f"'{raw_value}' and '{condition.value}': "
+                    "both must be numeric"
+                )
+
+        if cell_is_numeric and target_is_numeric:
             return self._compare_numeric(
                 float(cell), condition.operator, float(target)
             )
@@ -77,7 +112,9 @@ class Executor:
         )
         result = []
         for row in rows:
-            projected = {col: row.get(col) for col in target_columns}
+            projected = {
+                col: row.get(col) for col in target_columns
+            }
             result.append(Row(projected))
         return result
 
